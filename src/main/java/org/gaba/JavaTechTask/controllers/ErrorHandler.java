@@ -1,2 +1,3 @@
-package org.gaba.JavaTechTask.controllers;public class ErrorHandler {
+package org.gaba.JavaTechTask.controllers;
+public class ErrorHandler {
 }
