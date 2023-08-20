@@ -1,7 +1,7 @@
 package org.gaba.JavaTechTask.controllers;
 
 import lombok.RequiredArgsConstructor;
-import org.gaba.JavaTechTask.entities.PostData;
+import org.gaba.JavaTechTask.controllers.dto.PostDTO;
 import org.gaba.JavaTechTask.services.JWTService;
 import org.gaba.JavaTechTask.services.PostService;
 import org.springframework.http.HttpHeaders;
@@ -26,7 +26,7 @@ public class PostController {
 
     @PostMapping("/create")
     public Mono<List<String>> createPost(
-            PostData data,
+            PostDTO data,
             BindingResult errors,
             @RequestHeader(HttpHeaders.AUTHORIZATION) String token) {
 

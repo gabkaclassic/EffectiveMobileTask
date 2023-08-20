@@ -13,6 +13,7 @@ import org.springframework.security.core.userdetails.ReactiveUserDetailsService;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.*;
@@ -35,6 +36,28 @@ public class AccountService implements ReactiveUserDetailsService {
         return accountRepository.findByUsername(username);
     }
 
+    public Mono<List<String>> findIdsByUsernames(List<String> usernames) {
+
+        return  Flux.fromStream(usernames.stream())
+                .flatMap(participant -> accountRepository.findByUsername(participant))
+                .cast(Account.class)
+                .map(participant -> participant.getId())
+                .collectList();
+    }
+
+    public Mono<Boolean> isFriends(String accountId, String friend) {
+
+        return accountRepository.existsById(accountId)
+                .flatMap(accountResult -> {
+                    if(!accountResult)
+                        return Mono.just(false);
+
+                    return accountRepository.findByUsername(friend)
+                            .cast(Account.class)
+                            .flatMap(user -> relationRepository.existsByUserAndTargetAndRelationType(accountId, user.getId(), RelationType.FRIEND));
+                });
+
+    }
     public Mono<String> login(Account account) {
 
         return accountRepository.findByUsername(account.getUsername())
@@ -75,7 +98,7 @@ public class AccountService implements ReactiveUserDetailsService {
 
         accountRepository.existsById(user_id).doOnNext(resultUser -> {
              accountRepository.findByUsername(targetUsername).cast(Account.class).doOnNext(target -> {
-                        if(!resultUser)
+                        if(!resultUser || user_id.equals(target.getId()))
                             return;
 
                         var subscribeRelation = new Relation(user_id, target.getId(), RelationType.SUBSCRIBER);
@@ -90,7 +113,8 @@ public class AccountService implements ReactiveUserDetailsService {
 
         accountRepository.findByUsername(username).cast(Account.class).doOnNext(user -> {
                     accountRepository.existsById(target_id).doOnNext(resultTarget -> {
-                        if(!resultTarget)
+
+                        if(!resultTarget || target_id.equals(user.getId()))
                             return;
 
                         relationRepository.findByUserAndTargetAndRelationType(user.getId(), target_id, RelationType.SUBSCRIBER)
@@ -110,7 +134,7 @@ public class AccountService implements ReactiveUserDetailsService {
     public void rejectRequest(String username, String target_id) {
 
         accountRepository.findByUsername(username).cast(Account.class).doOnNext(user -> accountRepository.existsById(target_id).doOnNext(resultTarget -> {
-            if(!resultTarget)
+            if(!resultTarget || target_id.equals(user.getId()))
                 return;
 
            relationRepository.findByUserAndTargetAndRelationType(target_id, user.getId(), RelationType.REQUEST)
@@ -123,11 +147,14 @@ public class AccountService implements ReactiveUserDetailsService {
 
         accountRepository.existsById(user_id).doOnNext(resultUser -> {
                     accountRepository.findByUsername(targetUsername).cast(Account.class).doOnNext(target -> {
-                        if (!resultUser)
+                        if (!resultUser || user_id.equals(target.getId()))
                             return;
 
                         relationRepository.findByUserAndTargetAndRelationType(user_id, target.getId(), RelationType.FRIEND)
-                                .doOnNext(relation -> relationRepository.delete(relation).subscribe())
+                                .doOnNext(relation -> {
+                                    relation.setRelationType(RelationType.SUBSCRIBER);
+                                    relationRepository.save(relation).subscribe();
+                                })
                                 .then(relationRepository.findByUserAndTargetAndRelationType(target.getId(), user_id, RelationType.FRIEND))
                                 .doOnNext(relation -> relationRepository.delete(relation).subscribe()).subscribe();
                     }).subscribe();
