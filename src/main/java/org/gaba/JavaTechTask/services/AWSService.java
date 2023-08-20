@@ -47,7 +47,7 @@ public class AWSService {
 
 
         return Flux.fromStream(files.stream()).map(file -> {
-            if (file != null) {
+            if (file != null && file.headers().getContentType() != null) {
 
                 var metadata = new ObjectMetadata();
                 metadata.setContentType(file.headers().getContentType().getType());

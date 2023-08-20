@@ -5,15 +5,14 @@ import org.gaba.JavaTechTask.entities.Post;
 import org.gaba.JavaTechTask.repositories.PostRepository;
 import org.gaba.JavaTechTask.validators.FilesValidator;
 import org.gaba.JavaTechTask.validators.PostValidator;
+import org.springframework.data.domain.*;
 import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -56,5 +55,24 @@ public class PostService {
 
                     return errors;
         });
+    }
+
+    public Mono<Boolean> delete(String author, String postId) {
+
+        return postRepository.findById(postId)
+                .map(post -> {
+                    if(!post.getAuthor().equals(author))
+                        return false;
+                    postRepository.deleteById(postId).subscribe();
+                    return true;
+                });
+    }
+
+    public Flux<Post> getFeed(String accountId, int pageSize, int pageNumber, boolean orderDesc) {
+
+        return accountService.getSubscriptions(accountId)
+                .flatMap(postRepository::findByAuthor)
+                .sort(orderDesc ? Comparator.comparing(Post::getCreationTime).reversed() : Comparator.comparing(Post::getCreationTime))
+                .skip((long) pageSize * pageNumber).take(pageSize);
     }
 }

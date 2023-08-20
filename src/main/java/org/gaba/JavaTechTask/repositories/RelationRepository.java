@@ -7,6 +7,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 public interface RelationRepository extends ReactiveCrudRepository<Relation, String> {
+    Flux<Relation> findByUserAndRelationType(String user, RelationType relationType);
     Flux<Relation> findByTargetAndRelationType(String target, RelationType relationType);
     Flux<Relation> findByTarget(String target);
     Mono<Boolean> existsByUserAndTargetAndRelationType(String user, String target, RelationType relationType);

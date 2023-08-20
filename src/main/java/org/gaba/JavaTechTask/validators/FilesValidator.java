@@ -35,10 +35,12 @@ public class FilesValidator {
             if (summarySize > MAX_FILES_SIZE_MB)
                 return List.of("Too big");
 
-            if (!EXTENSION_PATTERN.matcher(file.filename()).matches())
+            if (StringUtils.hasText(file.filename()) && !EXTENSION_PATTERN.matcher(file.filename()).matches())
                 return List.of("Invalid file name");
 
-            if (!checkContentType(file.headers().getContentType().getType(), type))
+            if (file.headers().getContentType() != null
+                    && StringUtils.hasText(file.headers().getContentType().getType())
+                    && !checkContentType(file.headers().getContentType().getType(), type))
                 return List.of("Invalid content type");
         }
         return Collections.emptyList();

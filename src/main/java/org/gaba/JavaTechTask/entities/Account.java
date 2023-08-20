@@ -11,9 +11,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.util.StringUtils;
 
 import java.util.Collection;
-import java.util.List;
 import java.util.Set;
-import java.util.UUID;
 
 @Table("accounts")
 @Data
@@ -58,6 +56,6 @@ public class Account implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return (confirmationCode == null || StringUtils.hasText(confirmationCode.toString())) && !authorities.contains(Authority.BLOCKED);
+        return (confirmationCode == null || StringUtils.hasText(confirmationCode)) && !authorities.contains(Authority.BLOCKED);
     }
 }

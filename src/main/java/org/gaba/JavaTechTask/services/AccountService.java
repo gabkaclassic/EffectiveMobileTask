@@ -2,12 +2,9 @@ package org.gaba.JavaTechTask.services;
 
 import com.amazonaws.services.cognitoidp.model.InvalidPasswordException;
 import lombok.RequiredArgsConstructor;
-import org.gaba.JavaTechTask.entities.Relation;
-import org.gaba.JavaTechTask.entities.RelationType;
+import org.gaba.JavaTechTask.entities.*;
 import org.gaba.JavaTechTask.repositories.RelationRepository;
 import org.gaba.JavaTechTask.validators.AccountValidator;
-import org.gaba.JavaTechTask.entities.Account;
-import org.gaba.JavaTechTask.entities.Authority;
 import org.gaba.JavaTechTask.repositories.AccountRepository;
 import org.springframework.security.core.userdetails.ReactiveUserDetailsService;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -34,15 +31,6 @@ public class AccountService implements ReactiveUserDetailsService {
     @Override
     public Mono<UserDetails> findByUsername(String username) {
         return accountRepository.findByUsername(username);
-    }
-
-    public Mono<List<String>> findIdsByUsernames(List<String> usernames) {
-
-        return  Flux.fromStream(usernames.stream())
-                .flatMap(participant -> accountRepository.findByUsername(participant))
-                .cast(Account.class)
-                .map(participant -> participant.getId())
-                .collectList();
     }
 
     public Mono<Boolean> isFriends(String accountId, String friend) {
@@ -163,7 +151,7 @@ public class AccountService implements ReactiveUserDetailsService {
     }
 
     public Mono<Boolean> existsById(String accountId) {
-        return accountRepository.existsById(accountId.toString());
+        return accountRepository.existsById(accountId);
     }
 
     public Flux<String> getUsersByRelation(String username, String relationTypeRaw) {
@@ -185,5 +173,28 @@ public class AccountService implements ReactiveUserDetailsService {
             );
             default -> accounts;
         };
+    }
+
+    private Flux<Account> getAccountsByRelation(String accountId, RelationType relationType) {
+
+        var accounts = accountRepository.findById(accountId)
+                .cast(Account.class)
+                .flatMapMany(account -> relationRepository.findByUserAndRelationType(accountId, relationType))
+                .flatMap(relation -> accountRepository.findById(relation.getTarget()));
+
+        return switch (relationType) {
+            case SUBSCRIBER -> Flux.merge(accounts, accountRepository.findById(accountId)
+                    .cast(Account.class)
+                    .flatMapMany(account -> relationRepository.findByUserAndRelationType(accountId, RelationType.FRIEND))
+                    .flatMap(relation -> accountRepository.findById(relation.getTarget()))
+            );
+            default -> accounts;
+        };
+    }
+
+    public Flux<String> getSubscriptions(String accountId) {
+
+        return getAccountsByRelation(accountId, RelationType.SUBSCRIBER)
+                .map(Account::getId);
     }
 }
