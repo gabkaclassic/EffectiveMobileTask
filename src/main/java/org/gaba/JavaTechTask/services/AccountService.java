@@ -165,4 +165,25 @@ public class AccountService implements ReactiveUserDetailsService {
     public Mono<Boolean> existsById(String accountId) {
         return accountRepository.existsById(accountId.toString());
     }
+
+    public Flux<String> getUsersByRelation(String username, String relationTypeRaw) {
+
+        var relationType = RelationType.valueOf(relationTypeRaw);
+
+        var accounts = accountRepository.findByUsername(username)
+                .cast(Account.class)
+                .flatMapMany(account -> relationRepository.findByTargetAndRelationType(account.getId(), relationType))
+                .flatMap(relation -> accountRepository.findById(relation.getUser()))
+                .map(Account::getUsername);
+
+        return switch (relationType) {
+            case SUBSCRIBER -> Flux.merge(accounts, accountRepository.findByUsername(username)
+                    .cast(Account.class)
+                    .flatMapMany(account -> relationRepository.findByTargetAndRelationType(account.getId(), RelationType.FRIEND))
+                    .flatMap(relation -> accountRepository.findById(relation.getUser()))
+                    .map(Account::getUsername)
+            );
+            default -> accounts;
+        };
+    }
 }

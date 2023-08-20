@@ -3,6 +3,7 @@ package org.gaba.JavaTechTask.entities;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Table;
 import org.springframework.security.core.GrantedAuthority;
@@ -25,8 +26,10 @@ public class Account implements UserDetails {
 
     private String username;
 
+    @ToString.Exclude
     private String password;
 
+    @ToString.Exclude
     private String email;
 
     private String confirmationCode;

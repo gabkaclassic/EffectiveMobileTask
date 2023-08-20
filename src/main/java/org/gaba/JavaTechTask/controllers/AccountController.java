@@ -8,6 +8,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
@@ -19,6 +20,12 @@ public class AccountController {
 
     private final AccountService accountService;
     private final JWTService jwtService;
+
+    @GetMapping("/relations")
+    public Flux<String> getSubscribers(@RequestParam("username") String username, @RequestParam("relationType") String relationType) {
+
+        return accountService.getUsersByRelation(username, relationType);
+    }
 
     @PostMapping("/auth")
     public Mono<ResponseEntity<String>> auth(@RequestBody Account account) {
