@@ -4,19 +4,17 @@ import lombok.RequiredArgsConstructor;
 import org.gaba.JavaTechTask.entities.PostData;
 import org.gaba.JavaTechTask.services.JWTService;
 import org.gaba.JavaTechTask.services.PostService;
-import org.springframework.data.repository.query.parser.Part;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.codec.multipart.FilePart;
-import org.springframework.util.MultiValueMap;
 import org.springframework.validation.BindingResult;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Mono;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
-import java.util.UUID;
 
 @RestController
 @RequestMapping("/post")

@@ -3,13 +3,11 @@ package org.gaba.JavaTechTask.controllers;
 import lombok.RequiredArgsConstructor;
 import org.gaba.JavaTechTask.entities.Account;
 import org.gaba.JavaTechTask.services.AccountService;
+import org.gaba.JavaTechTask.services.JWTService;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
@@ -20,6 +18,7 @@ import java.util.List;
 public class AccountController {
 
     private final AccountService accountService;
+    private final JWTService jwtService;
 
     @PostMapping("/auth")
     public Mono<ResponseEntity<String>> auth(@RequestBody Account account) {
@@ -34,5 +33,29 @@ public class AccountController {
 
         return accountService.registration(account)
                 .map(result -> (result.isEmpty() ? ResponseEntity.ok() : ResponseEntity.status(HttpStatus.FORBIDDEN)).body(result));
+    }
+
+    @PostMapping("/send_request")
+    public void sendRequest(@RequestHeader(HttpHeaders.AUTHORIZATION) String token, @RequestParam("targetUsername") String targetUsername) {
+
+        accountService.sendRequest(jwtService.extractId(token), targetUsername);
+    }
+
+    @PostMapping("/reject_request")
+    public void rejectRequest(@RequestHeader(HttpHeaders.AUTHORIZATION) String token, @RequestParam("username") String username) {
+
+        accountService.rejectRequest(username, jwtService.extractId(token));
+    }
+
+    @PostMapping("/confirm_request")
+    public void confirmRequest(@RequestHeader(HttpHeaders.AUTHORIZATION) String token, @RequestParam("username") String username) {
+
+        accountService.confirmRequest(username, jwtService.extractId(token));
+    }
+
+    @PostMapping("/reject_friend")
+    public void rejectFriend(@RequestHeader(HttpHeaders.AUTHORIZATION) String token, @RequestParam("targetUsername") String targetUsername) {
+
+        accountService.rejectFriend(jwtService.extractId(token), targetUsername);
     }
 }

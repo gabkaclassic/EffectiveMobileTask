@@ -10,6 +10,7 @@ import reactor.core.publisher.Mono;
 import java.util.UUID;
 @Repository
 public interface AccountRepository extends ReactiveCrudRepository<Account, String> {
+    Mono<Boolean> existsByUsername(String username);
     Mono<Boolean> existsByUsernameIgnoreCaseOrEmailIgnoreCase(String username, String email);
     Mono<UserDetails> findByUsername(String username);
 }

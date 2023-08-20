@@ -2,6 +2,9 @@ package org.gaba.JavaTechTask.services;
 
 import com.amazonaws.services.cognitoidp.model.InvalidPasswordException;
 import lombok.RequiredArgsConstructor;
+import org.gaba.JavaTechTask.entities.Relation;
+import org.gaba.JavaTechTask.entities.RelationType;
+import org.gaba.JavaTechTask.repositories.RelationRepository;
 import org.gaba.JavaTechTask.validators.AccountValidator;
 import org.gaba.JavaTechTask.entities.Account;
 import org.gaba.JavaTechTask.entities.Authority;
@@ -19,6 +22,8 @@ import java.util.*;
 public class AccountService implements ReactiveUserDetailsService {
 
     private final AccountRepository accountRepository;
+
+    private final RelationRepository relationRepository;
 
     private final PasswordEncoder passwordEncoder;
 
@@ -66,7 +71,71 @@ public class AccountService implements ReactiveUserDetailsService {
                 });
     }
 
-    public Mono<Boolean> existsById(String authorId) {
-        return accountRepository.existsById(authorId.toString());
+    public void sendRequest(String user_id, String targetUsername) {
+
+        accountRepository.existsById(user_id).doOnNext(resultUser -> {
+             accountRepository.findByUsername(targetUsername).cast(Account.class).doOnNext(target -> {
+                        if(!resultUser)
+                            return;
+
+                        var subscribeRelation = new Relation(user_id, target.getId(), RelationType.SUBSCRIBER);
+                        var requestRelation = new Relation(target.getId(), user_id, RelationType.REQUEST);
+                        relationRepository.save(subscribeRelation).then(relationRepository.save(requestRelation)).subscribe();
+                    }).subscribe();
+                }
+        ).subscribe();
+    }
+
+    public void confirmRequest(String username, String target_id) {
+
+        accountRepository.findByUsername(username).cast(Account.class).doOnNext(user -> {
+                    accountRepository.existsById(target_id).doOnNext(resultTarget -> {
+                        if(!resultTarget)
+                            return;
+
+                        relationRepository.findByUserAndTargetAndRelationType(user.getId(), target_id, RelationType.SUBSCRIBER)
+                                .doOnNext(relation -> {
+                                    relation.setRelationType(RelationType.FRIEND);
+                                    relationRepository.save(relation).subscribe();
+                                }).then(relationRepository.findByUserAndTargetAndRelationType(target_id, user.getId(), RelationType.REQUEST))
+                                .doOnNext(relation -> {
+                                    relation.setRelationType(RelationType.FRIEND);
+                                    relationRepository.save(relation).subscribe();
+                                }).subscribe();
+                    }).subscribe();
+                }
+        ).subscribe();
+    }
+
+    public void rejectRequest(String username, String target_id) {
+
+        accountRepository.findByUsername(username).cast(Account.class).doOnNext(user -> accountRepository.existsById(target_id).doOnNext(resultTarget -> {
+            if(!resultTarget)
+                return;
+
+           relationRepository.findByUserAndTargetAndRelationType(target_id, user.getId(), RelationType.REQUEST)
+                    .doOnNext(relation -> relationRepository.delete(relation).subscribe()).subscribe();
+        }).subscribe()
+        ).subscribe();
+    }
+
+    public void rejectFriend(String user_id, String targetUsername) {
+
+        accountRepository.existsById(user_id).doOnNext(resultUser -> {
+                    accountRepository.findByUsername(targetUsername).cast(Account.class).doOnNext(target -> {
+                        if (!resultUser)
+                            return;
+
+                        relationRepository.findByUserAndTargetAndRelationType(user_id, target.getId(), RelationType.FRIEND)
+                                .doOnNext(relation -> relationRepository.delete(relation).subscribe())
+                                .then(relationRepository.findByUserAndTargetAndRelationType(target.getId(), user_id, RelationType.FRIEND))
+                                .doOnNext(relation -> relationRepository.delete(relation).subscribe()).subscribe();
+                    }).subscribe();
+                }
+        ).subscribe();
+    }
+
+    public Mono<Boolean> existsById(String accountId) {
+        return accountRepository.existsById(accountId.toString());
     }
 }

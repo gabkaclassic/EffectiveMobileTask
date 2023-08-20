@@ -10,6 +10,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.util.StringUtils;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
@@ -30,7 +31,7 @@ public class Account implements UserDetails {
 
     private String confirmationCode;
 
-    private Set<Authority> authorities;
+    private Set<Authority> authorities = Set.of(Authority.USER);
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
