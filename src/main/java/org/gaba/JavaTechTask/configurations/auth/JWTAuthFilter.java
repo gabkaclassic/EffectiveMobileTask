@@ -3,6 +3,8 @@ package org.gaba.JavaTechTask.configurations.auth;
 import lombok.RequiredArgsConstructor;
 import org.apache.http.HttpHeaders;
 import org.gaba.JavaTechTask.services.JWTService;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
@@ -12,7 +14,6 @@ import reactor.core.publisher.Mono;
 
 import java.util.List;
 
-@Component
 @RequiredArgsConstructor
 public class JWTAuthFilter implements WebFilter {
 

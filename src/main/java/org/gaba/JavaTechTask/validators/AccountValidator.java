@@ -1,9 +1,11 @@
-package org.gaba.JavaTechTask.configurations.validators;
+package org.gaba.JavaTechTask.validators;
 
 import org.gaba.JavaTechTask.entities.Account;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.regex.Pattern;
 
 @Component
@@ -13,11 +15,18 @@ public class AccountValidator {
     private static final Pattern PASSWORD_PATTERN = Pattern.compile("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&+=_-]{8,}$");
     private static final Pattern USERNAME_PATTERN = Pattern.compile("^[a-zA-Z0-9_-]{3,128}$");
 
-    public boolean validateAccount(Account account) {
+    public List<String> validateAccount(Account account) {
 
-        return checkPassword(account.getPassword())
-                && checkEmail(account.getEmail())
-                && checkUsername(account.getUsername());
+        var errors = new ArrayList<String>();
+
+        if(!checkPassword(account.getPassword()))
+            errors.add("Password must contains numbers, special symbols (minimum 8 symbols)");
+        if(!checkEmail(account.getEmail()))
+            errors.add("Invalid email");
+        if(!checkUsername(account.getUsername()))
+            errors.add("Invalid username - 3-128 symbols, only latin letters, '_' and '-'");
+
+        return errors;
     }
 
     private boolean checkPassword(String password) {

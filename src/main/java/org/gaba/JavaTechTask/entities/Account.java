@@ -20,7 +20,7 @@ import java.util.UUID;
 public class Account implements UserDetails {
 
     @Id
-    private UUID id;
+    private String id;
 
     private String username;
 
@@ -28,7 +28,7 @@ public class Account implements UserDetails {
 
     private String email;
 
-    private UUID confirmationCode;
+    private String confirmationCode;
 
     private Set<Authority> authorities;
 

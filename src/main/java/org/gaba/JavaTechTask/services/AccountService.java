@@ -1,23 +1,18 @@
 package org.gaba.JavaTechTask.services;
 
 import com.amazonaws.services.cognitoidp.model.InvalidPasswordException;
-import io.micrometer.observation.ObservationFilter;
 import lombok.RequiredArgsConstructor;
-import org.gaba.JavaTechTask.configurations.validators.AccountValidator;
+import org.gaba.JavaTechTask.validators.AccountValidator;
 import org.gaba.JavaTechTask.entities.Account;
 import org.gaba.JavaTechTask.entities.Authority;
-import org.gaba.JavaTechTask.entities.Credentials;
 import org.gaba.JavaTechTask.repositories.AccountRepository;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.ReactiveUserDetailsService;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -35,39 +30,43 @@ public class AccountService implements ReactiveUserDetailsService {
         return accountRepository.findByUsername(username);
     }
 
-    public Mono<String> login(Credentials credentials) {
+    public Mono<String> login(Account account) {
 
-        return accountRepository.findByUsername(credentials.username()).log()
+        return accountRepository.findByUsername(account.getUsername())
                 .cast(Account.class)
-                .log()
-                .map(account -> {
-                    var correctPassword = passwordEncoder.matches(credentials.password(), account.getPassword());
+                
+                .map(acc -> {
+                    var correctPassword = passwordEncoder.matches(account.getPassword(), acc.getPassword());
 
-                    if(correctPassword && account.isEnabled())
-                        return jwtService.generateToken(account);
+                    if(correctPassword && acc.isEnabled())
+                        return jwtService.generateToken(acc);
 
                     throw new InvalidPasswordException("Invalid password");
-                }).log();
+                });
     }
 
-    public Mono<Account> test(Credentials credentials) {
-
-        return accountRepository.findByUsername(credentials.username()).log().cast(Account.class);
-    }
-
-    public Mono<Boolean> registration(Account account) {
+    public Mono<List<String>> registration(Account account) {
 
         return accountRepository.existsByUsernameIgnoreCaseOrEmailIgnoreCase(account.getUsername(), account.getEmail())
                 .map(exists -> {
-                   if(exists || !accountValidator.validateAccount(account))
-                        return false;
+                   if(exists)
+                       return List.of("Account with this username or email already exists");
 
-                   account.setConfirmationCode(UUID.randomUUID());
+                   var errors = accountValidator.validateAccount(account);
+
+                    if(!errors.isEmpty())
+                        return errors;
+
+                   account.setConfirmationCode(UUID.randomUUID().toString());
                    account.setPassword(passwordEncoder.encode(account.getPassword()));
                    account.setAuthorities(Set.of(Authority.USER));
                    accountRepository.save(account).subscribe();
 
-                   return true;
+                   return Collections.emptyList();
                 });
+    }
+
+    public Mono<Boolean> existsById(String authorId) {
+        return accountRepository.existsById(authorId.toString());
     }
 }

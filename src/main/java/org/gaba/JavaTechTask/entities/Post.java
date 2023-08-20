@@ -1,6 +1,7 @@
 package org.gaba.JavaTechTask.entities;
 
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
@@ -11,17 +12,19 @@ import java.util.UUID;
 
 @Table("posts")
 @Data
+@Builder(toBuilder = true)
 @NoArgsConstructor
 @AllArgsConstructor
 public class Post {
 
     @Id
-    private UUID id;
+    private String id;
 
     private String subject;
 
     private String content;
 
-    private List<String> files;
+    private String author;
 
+    private List<String> files;
 }

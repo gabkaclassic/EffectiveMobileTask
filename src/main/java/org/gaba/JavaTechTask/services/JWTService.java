@@ -1,6 +1,9 @@
 package org.gaba.JavaTechTask.services;
 
+import com.amazonaws.services.applicationdiscovery.model.AuthorizationErrorException;
+import io.jsonwebtoken.ClaimJwtException;
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import org.gaba.JavaTechTask.entities.Account;
@@ -11,6 +14,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 public class JWTService {
@@ -24,7 +28,7 @@ public class JWTService {
 
     public JWTService(@Value("${jwt.secret}") String secret, @Value("${jwt.expiration}") String expirationTime) {
         this.secret = secret.getBytes();
-        this.expirationTime = Long.parseLong(expirationTime);
+        this.expirationTime = Long.parseLong(expirationTime) * 1000;
     }
 
     public String extractUsername(String token) {
@@ -57,7 +61,7 @@ public class JWTService {
 
     public boolean validateToken(String token) {
 
-        if(token == null || token.startsWith("Bearer "))
+        if(token == null || !token.startsWith("Bearer "))
             return false;
 
         token = token.substring(7);
@@ -66,11 +70,27 @@ public class JWTService {
     }
 
     private boolean expired(String token) {
-        return getClaims(token).getExpiration().after(new Date());
+        try {
+            return getClaims(token).getExpiration().before(new Date());
+        } catch (ExpiredJwtException e) {
+            return false;
+        }
     }
 
     private Claims getClaims(String token) {
+
+        if(token == null) {
+            throw new AuthorizationErrorException("Invalid token");
+        }
+
+        if(token.startsWith("Bearer "))
+            token = token.substring(7);
+
         return Jwts.parserBuilder().setSigningKey(secret)
                 .build().parseClaimsJws(token).getBody();
+    }
+
+    public String extractId(String token) {
+        return getClaims(token).get(ID_CLAIM, String.class);
     }
 }
