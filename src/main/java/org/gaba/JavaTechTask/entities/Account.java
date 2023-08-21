@@ -41,6 +41,17 @@ public class Account implements UserDetails {
     @Schema(description = "Роли пользователя")
     private Set<Authority> authorities = Set.of(Authority.USER);
 
+    public Account(String username, String password, String email) {
+        this.username = username;
+        this.password = password;
+        this.email = email;
+    }
+
+    public Account(String username, String password) {
+        this.username = username;
+        this.password = password;
+    }
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return authorities;

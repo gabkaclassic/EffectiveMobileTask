@@ -22,4 +22,9 @@ public class Chat {
 
     @Schema(description = "Второй участник (в дальнейшем таким же образом можно сделать несколько участников)")
     private String participant;
+
+    public Chat(String creator, String participant) {
+        this.creator = creator;
+        this.participant = participant;
+    }
 }
