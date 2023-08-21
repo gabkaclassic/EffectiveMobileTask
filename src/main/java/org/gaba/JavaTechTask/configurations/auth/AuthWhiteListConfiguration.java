@@ -8,7 +8,7 @@ import java.util.List;
 @Configuration
 public class AuthWhiteListConfiguration {
 
-    @Bean
+    @Bean("authWhiteList")
     public List<String> authWhiteList() {
         return List.of(
                 "/account/auth",

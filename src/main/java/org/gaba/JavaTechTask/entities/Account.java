@@ -1,5 +1,6 @@
 package org.gaba.JavaTechTask.entities;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -17,21 +18,27 @@ import java.util.Set;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@Schema(description = "Сущность пользователя")
 public class Account implements UserDetails {
 
     @Id
     private String id;
 
+    @Schema(description = "Имя пользователя")
     private String username;
 
+    @Schema(description = "Пароль")
     @ToString.Exclude
     private String password;
 
+    @Schema(description = "Электронная почта")
     @ToString.Exclude
     private String email;
 
+    @Schema(description = "Код подтверждения почты (для будущего функционала)")
     private String confirmationCode;
 
+    @Schema(description = "Роли пользователя")
     private Set<Authority> authorities = Set.of(Authority.USER);
 
     @Override

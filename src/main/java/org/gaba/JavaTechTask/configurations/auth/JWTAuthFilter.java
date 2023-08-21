@@ -20,13 +20,19 @@ public class JWTAuthFilter implements WebFilter {
     private final JWTService jwtService;
 
     private final List<String> authWhiteList;
+    private static final List<String> documentationUrls = List.of(
+            "/swagger-ui",
+            "/webjars/swagger-ui/",
+            "/v3/api-docs"
+    );
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
 
         var path = exchange.getRequest().getPath().toString();
 
-        if(authWhiteList.stream().anyMatch(p -> p.equals(path)))
+        if(authWhiteList.stream().anyMatch(p -> p.equals(path))
+                || documentationUrls.stream().anyMatch(path::startsWith))
             return chain.filter(exchange);
 
         var token = exchange.getRequest().getHeaders().getFirst(HttpHeaders.AUTHORIZATION);

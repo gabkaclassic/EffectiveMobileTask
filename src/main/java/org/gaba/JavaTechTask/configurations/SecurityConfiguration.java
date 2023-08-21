@@ -1,5 +1,6 @@
 package org.gaba.JavaTechTask.configurations;
 
+import io.swagger.v3.oas.annotations.Hidden;
 import lombok.RequiredArgsConstructor;
 import org.gaba.JavaTechTask.configurations.auth.JWTAuthFilter;
 import org.gaba.JavaTechTask.services.JWTService;
@@ -15,6 +16,7 @@ import org.springframework.security.web.server.SecurityWebFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.reactive.CorsConfigurationSource;
 import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource;
+import springfox.documentation.annotations.ApiIgnore;
 
 import java.util.List;
 
@@ -22,19 +24,19 @@ import java.util.List;
 @EnableReactiveMethodSecurity
 @EnableWebFluxSecurity
 @RequiredArgsConstructor
+@Hidden
 public class SecurityConfiguration {
-
-
     @Bean
     public JWTAuthFilter jwtAuthFilter(JWTService jwtService, List<String> authWhiteList) {
         return new JWTAuthFilter(jwtService, authWhiteList);
     }
     @Bean
-    public SecurityWebFilterChain filterChain(ServerHttpSecurity config, JWTService jwtService, List<String> authWhiteList) {
+    public SecurityWebFilterChain filterChain(ServerHttpSecurity config, JWTService jwtService,
+                                              List<String> authWhiteList) {
 
         return config
                 .cors(corsSpec -> corsSpec.configurationSource(corsConfigurationSource()))
-                .csrf(csrfSpec -> csrfSpec.disable())
+                .csrf(ServerHttpSecurity.CsrfSpec::disable)
                 .formLogin(ServerHttpSecurity.FormLoginSpec::disable)
                 .httpBasic(ServerHttpSecurity.HttpBasicSpec::disable)
                 .addFilterAt(jwtAuthFilter(jwtService, authWhiteList), SecurityWebFiltersOrder.AUTHORIZATION)
